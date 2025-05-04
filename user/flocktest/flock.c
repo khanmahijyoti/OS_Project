@@ -115,6 +115,18 @@ int flock_release(struct flock_t *flock) {
         spinlock_release(&flock->lock);
         return -1;
     }
+
+    if (flock->state == EXCLUSIVE) {
+
+        flock->ex_active = FALSE;
+        flock->state = INACTIVE;
+        if (flock->num_ex_waiting > 0) {
+            cv_signal(&flock->ex_flock);
+        } else {
+            cv_broadcast(&flock->sh_flock);
+        }
+
+    }
     
     return 0;
 }

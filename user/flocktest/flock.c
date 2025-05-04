@@ -111,8 +111,10 @@ int flock_release(struct flock_t *flock) {
 
     spinlock_acquire(&flock->lock);
 
+    if (flock->state == INACTIVE) {
+        spinlock_release(&flock->lock);
+        return -1;
+    }
     
-
-   // to do implement flock_release
     return 0;
 }

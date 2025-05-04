@@ -126,7 +126,24 @@ int flock_release(struct flock_t *flock) {
             cv_broadcast(&flock->sh_flock);
         }
 
+    } else if (flock->state == SHARED) {
+
+        flock->num_sh_active--;
+        if (flock->num_ex_waiting > 0) {
+            if (flock->num_sh_active == 0) {
+                flock->state = INACTIVE;
+                cv_signal(&flock->ex_flock);
+            }
+        } else {
+            if (flock->num_sh_active == 0) {
+                flock->state = INACTIVE;
+            }
+            cv_broadcast(&flock->sh_flock);
+        }
+
     }
+
+    spinlock_release(&flock->lock);
     
     return 0;
 }
